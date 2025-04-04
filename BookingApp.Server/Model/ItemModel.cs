@@ -1,8 +1,4 @@
-﻿#nullable enable // Enable nullable reference types for better null-safety and clearer intent
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookingApp.Server.Model
@@ -27,7 +23,7 @@ namespace BookingApp.Server.Model
     }
 
     /// <summary>
-    /// Represents the lifecycle status of a booking. Crucial for business logic.
+    /// Represents the lifecycle status of a booking.
     /// </summary>
     public enum BookingStatus
     {
@@ -39,9 +35,8 @@ namespace BookingApp.Server.Model
     }
 
     /// <summary>
-    /// Key amenities/features often sought in Cornwall holiday lets.
+    /// Key amenities/features often seen in Cornwall holiday lets.
     /// Using an Enum collection is concise and queryable.
-    /// Consider if any should be top-level Booleans if they are exceptionally important search criteria (e.g., PetFriendly).
     /// </summary>
     public enum AmenityType // Renamed from FeatureType for clarity
     {
