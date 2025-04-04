@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson; // Added for JsonPatch support
 using Microsoft.EntityFrameworkCore; // Keep for DbUpdateConcurrencyException, DbUpdateException
 using Microsoft.Extensions.Logging;
 using System;
@@ -597,9 +598,11 @@ namespace BookingApp.Server.Controllers
                 _logger.LogWarning("Invalid availability period DTO for accommodation {AccommodationId}: End date before start date. DTO: {@AvailabilityPeriodDto}", id, periodDto);
                 return BadRequest(ModelState);
             }
-            if (periodDto.PricePerNight <= 0)
+            
+            // Fix: Use PricePerNightOverride instead of non-existent PricePerNight
+            if (periodDto.PricePerNightOverride.HasValue && periodDto.PricePerNightOverride.Value <= 0)
             {
-                ModelState.AddModelError(nameof(periodDto.PricePerNight), "Price per night must be positive.");
+                ModelState.AddModelError(nameof(periodDto.PricePerNightOverride), "Price per night must be positive.");
                 _logger.LogWarning("Invalid availability period DTO for accommodation {AccommodationId}: Non-positive price. DTO: {@AvailabilityPeriodDto}", id, periodDto);
                 return BadRequest(ModelState);
             }
