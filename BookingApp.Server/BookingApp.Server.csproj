@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <SpaRoot>..\bookingapp.client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:61872</SpaProxyServerUrl>
-  </PropertyGroup>
+<PropertyGroup>
+  <TargetFramework>net8.0</TargetFramework>
+  <Nullable>enable</Nullable>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <SpaRoot>..\bookingapp.client</SpaRoot>
+  <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+  <SpaProxyServerUrl>https://localhost:61872</SpaProxyServerUrl>
+  <RestoreSources>https://api.nuget.org/v3/index.json</RestoreSources>
+</PropertyGroup>
+
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>8.*-*</Version>
-    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
