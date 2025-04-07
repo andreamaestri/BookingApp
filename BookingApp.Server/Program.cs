@@ -1,8 +1,10 @@
 using BookingApp.Server;
 using BookingApp.Server.Repositories;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer; // Add this line to fix the error
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AutoMapper; // Add this explicit import
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +16,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
-// Register AutoMapper
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
+// Register AutoMapper - specify the assembly by using a marker type from your project
+builder.Services.AddAutoMapper(typeof(BookingApp.Server.Mapping.MappingProfile));
 
 // Register repositories
 builder.Services.AddScoped<IAccommodationRepository, AccommodationRepository>();
@@ -23,9 +25,15 @@ builder.Services.AddScoped<IAccommodationRepository, AccommodationRepository>();
 // builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 // builder.Services.AddScoped<IGuestRepository, GuestRepository>();
 
-// Add support for JsonPatch
+// Configure System.Text.Json
 builder.Services.AddControllers()
-    .AddNewtonsoftJson();
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // Add CORS support for client communication
 builder.Services.AddCors(options =>
