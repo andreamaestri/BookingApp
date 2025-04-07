@@ -19,6 +19,12 @@ namespace BookingApp.Server.Model
         public required string Title { get; set; }
 
         /// <summary>
+        /// Alternative name for the property. Can be used for internal reference.
+        /// </summary>
+        [StringLength(150)]
+        public string? Name { get; set; }
+
+        /// <summary>
         /// Detailed description. Can support simple formatting (e.g., paragraphs). Required.
         /// </summary>
         [StringLength(4000)]

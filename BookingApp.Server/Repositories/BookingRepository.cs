@@ -1,3 +1,4 @@
+using BookingApp.Server.Core;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ namespace BookingApp.Server.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<PagedResult<BookingSummaryDto>> GetBookingsAsync(BookingFilter filter)
+        public async Task<Core.PagedResult<BookingSummaryDto>> GetBookingsAsync(BookingFilter filter)
         {
             var query = _context.Bookings
                 .Include(b => b.Guest)
@@ -60,10 +61,10 @@ namespace BookingApp.Server.Repositories
 
             var bookingDtos = _mapper.Map<List<BookingSummaryDto>>(bookings);
 
-            return new PagedResult<BookingSummaryDto>
+            return new Core.PagedResult<BookingSummaryDto>
             {
                 Items = bookingDtos,
-                TotalItems = totalItems,
+                TotalCount = totalItems,
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };
@@ -124,7 +125,7 @@ namespace BookingApp.Server.Repositories
 
             // Calculate total price (nights × price per night)
             var nights = (createDto.CheckOutDate - createDto.CheckInDate).Days;
-            var totalPrice = accommodation.PricePerNight * nights;
+            var totalPrice = accommodation.BasePricePerNight * nights;
 
             // Create new booking
             var booking = new BookingModel
@@ -133,7 +134,7 @@ namespace BookingApp.Server.Repositories
                 GuestId = guestId,
                 CheckInDate = createDto.CheckInDate,
                 CheckOutDate = createDto.CheckOutDate,
-                GuestCount = createDto.GuestCount,
+                NumberOfGuests = createDto.NumberOfGuests,
                 Status = BookingStatus.Confirmed,
                 TotalPrice = totalPrice,
                 BookingDate = DateTime.UtcNow,
@@ -173,7 +174,7 @@ namespace BookingApp.Server.Repositories
                 // Recalculate total price if dates changed
                 var accommodation = await _context.Accommodations.FindAsync(booking.AccommodationId);
                 var nights = (updateDto.CheckOutDate.Value - updateDto.CheckInDate.Value).Days;
-                booking.TotalPrice = accommodation.PricePerNight * nights;
+                booking.TotalPrice = accommodation.BasePricePerNight * nights;
             }
 
             // Update booking properties
@@ -183,8 +184,8 @@ namespace BookingApp.Server.Repositories
             if (updateDto.CheckOutDate.HasValue)
                 booking.CheckOutDate = updateDto.CheckOutDate.Value;
             
-            if (updateDto.GuestCount.HasValue)
-                booking.GuestCount = updateDto.GuestCount.Value;
+            if (updateDto.NumberOfGuests.HasValue)
+                booking.NumberOfGuests = updateDto.NumberOfGuests.Value;
             
             if (updateDto.Status.HasValue)
                 booking.Status = updateDto.Status.Value;
@@ -218,6 +219,15 @@ namespace BookingApp.Server.Repositories
         }
 
         /// <inheritdoc />
+        public async Task<bool> IsAccommodationAvailableAsync(int accommodationId, DateTime checkIn, DateTime checkOut)
+        {
+            // Call the overloaded method without the excludeBookingId parameter
+            return await IsAccommodationAvailableAsync(accommodationId, checkIn, checkOut, null);
+        }
+
+        /// <summary>
+        /// Extended version of IsAccommodationAvailableAsync that allows excluding a specific booking
+        /// </summary>
         public async Task<bool> IsAccommodationAvailableAsync(int accommodationId, DateTime checkIn, DateTime checkOut, int? excludeBookingId = null)
         {
             // First check if the accommodation exists

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BookingApp.Server.Core;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
 using BookingApp.Server.Repositories;
@@ -6,15 +7,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson; // Added for JsonPatch support
-using Microsoft.EntityFrameworkCore; // Keep for DbUpdateConcurrencyException, DbUpdateException
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading; // Added for CancellationToken
+using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace BookingApp.Server.Controllers
 {
@@ -66,10 +67,10 @@ namespace BookingApp.Server.Controllers
         /// <response code="500">If an unexpected server error occurs.</response>
         [HttpGet]
         [AllowAnonymous] // Publicly accessible endpoint
-        [ProducesResponseType(typeof(PagedResult<AccommodationSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Core.PagedResult<AccommodationSummaryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<PagedResult<AccommodationSummaryDto>>> GetAccommodations(
+        public async Task<ActionResult<Core.PagedResult<AccommodationSummaryDto>>> GetAccommodations(
             [FromQuery] AccommodationFilter filter,
             CancellationToken cancellationToken) // Added CancellationToken
         {
@@ -85,7 +86,7 @@ namespace BookingApp.Server.Controllers
                 _logger.LogInformation("Attempting to retrieve accommodations with filter: {@Filter}", filter);
 
                 // Delegate the core logic to the repository layer.
-                var result = await _repository.GetAccommodationsAsync(filter, cancellationToken); // Pass CancellationToken
+                var result = await _repository.GetAccommodationsAsync(filter);
 
                 _logger.LogInformation("Successfully retrieved {Count} accommodations on page {PageNumber} with page size {PageSize}",
                     result.Items.Count(), filter.PageNumber, filter.PageSize);
@@ -135,7 +136,7 @@ namespace BookingApp.Server.Controllers
                 _logger.LogInformation("Attempting to retrieve accommodation details for ID {AccommodationId}", id);
 
                 // Fetch data via repository. The repository should handle mapping if it returns DTOs directly.
-                var accommodationDto = await _repository.GetAccommodationByIdAsync(id, cancellationToken);
+                var accommodationDto = await _repository.GetAccommodationByIdAsync(id);
 
                 if (accommodationDto == null)
                 {
@@ -202,7 +203,7 @@ namespace BookingApp.Server.Controllers
                 _logger.LogInformation("User {UserId} attempting to create accommodation: {@CreateAccommodationDto}", ownerId.Value, createDto);
 
                 // Delegate creation logic to the repository/service layer.
-                var createdDto = await _repository.CreateAccommodationAsync(createDto, ownerId.Value, cancellationToken);
+                var createdDto = await _repository.CreateAccommodationAsync(createDto, ownerId.Value);
 
                 _logger.LogInformation("Accommodation {AccommodationId} created successfully by User {UserId}", createdDto.Id, ownerId.Value);
 
@@ -268,7 +269,7 @@ namespace BookingApp.Server.Controllers
                 // Fetch the entity minimally needed for the ownership check.
                 // Avoid fetching the full entity if only the OwnerId is needed for authorization,
                 // although GetAccommodationEntityAsync might already be optimized.
-                var accommodation = await _repository.GetAccommodationEntityAsync(id, cancellationToken);
+                var accommodation = await _repository.GetAccommodationEntityAsync(id);
                 if (accommodation == null)
                 {
                     _logger.LogWarning("Update failed: Accommodation with ID {AccommodationId} not found.", id);
@@ -288,7 +289,7 @@ namespace BookingApp.Server.Controllers
                 // --- Perform Update ---
                 // Delegate the update logic to the repository.
                 // The repository should handle mapping from DTO to entity and saving changes.
-                bool updated = await _repository.UpdateAccommodationAsync(id, updateDto, cancellationToken);
+                await _repository.UpdateAccommodationAsync(id, updateDto);
 
                 // Note: UpdateAccommodationAsync returning bool might be less common than throwing exceptions.
                 // If it returns false when not found (after the initial check), handle appropriately.
@@ -306,7 +307,7 @@ namespace BookingApp.Server.Controllers
                                    id, HttpContext.TraceIdentifier);
 
                 // Optional: Check if the entity still exists after the conflict.
-                if (!await _repository.AccommodationExistsAsync(id, CancellationToken.None)) // Use CancellationToken.None for this quick check
+                if (!await _repository.AccommodationExistsAsync(id)) // Use CancellationToken.None for this quick check
                 {
                     _logger.LogWarning("Concurrency conflict for accommodation ID {AccommodationId}, but it no longer exists.", id);
                     return NotFound(new ProblemDetails { Title = "Not Found", Detail = $"Accommodation with ID {id} not found (possibly deleted).", Status = StatusCodes.Status404NotFound });
@@ -384,7 +385,7 @@ namespace BookingApp.Server.Controllers
             {
                 // --- Fetch and Authorize ---
                 // Fetch the entity. We need it to apply the patch correctly and check ownership.
-                var accommodation = await _repository.GetAccommodationEntityAsync(id, cancellationToken);
+                var accommodation = await _repository.GetAccommodationEntityAsync(id);
                 if (accommodation == null)
                 {
                     _logger.LogWarning("PATCH failed: Accommodation with ID {AccommodationId} not found.", id);
@@ -408,7 +409,7 @@ namespace BookingApp.Server.Controllers
 
                 // 2. Apply the patch operations to the temporary DTO.
                 //    The `ModelState` parameter allows capturing errors during the application phase (e.g., invalid path).
-                patchDoc.ApplyTo(accommodationToPatch, ModelState);
+                patchDoc.ApplyTo(accommodationToPatch);
 
                 // 3. Check if applying the patch caused any errors (e.g., invalid path, invalid value type).
                 if (!ModelState.IsValid)
@@ -429,7 +430,7 @@ namespace BookingApp.Server.Controllers
                 // 5. Delegate persistence to the repository. This method should handle mapping
                 //    the *patched DTO* back to the entity and saving. It might need the original entity
                 //    for comparison or concurrency checks depending on implementation.
-                await _repository.PatchAccommodationAsync(id, accommodationToPatch, cancellationToken); // Pass the patched DTO
+                await _repository.PatchAccommodationAsync(id, accommodationToPatch); // Pass the patched DTO
 
                 _logger.LogInformation("Accommodation {AccommodationId} patched successfully by User {UserId}", id, GetCurrentUserIdOrDefault());
 
@@ -439,7 +440,7 @@ namespace BookingApp.Server.Controllers
             {
                 _logger.LogWarning(ex, "Concurrency conflict occurred while attempting to PATCH accommodation ID {AccommodationId}. TraceId: {TraceId}",
                                   id, HttpContext.TraceIdentifier);
-                if (!await _repository.AccommodationExistsAsync(id, CancellationToken.None))
+                if (!await _repository.AccommodationExistsAsync(id))
                 {
                     return NotFound(new ProblemDetails { Title = "Not Found", Detail = $"Accommodation with ID {id} not found (possibly deleted).", Status = StatusCodes.Status404NotFound });
                 }
@@ -498,7 +499,7 @@ namespace BookingApp.Server.Controllers
             {
                 // --- Fetch and Authorize ---
                 // Fetch the entity first to check ownership before deleting.
-                var accommodation = await _repository.GetAccommodationEntityAsync(id, cancellationToken);
+                var accommodation = await _repository.GetAccommodationEntityAsync(id);
                 if (accommodation == null)
                 {
                     // Logically, if it doesn't exist, the delete operation is idempotent from the client's perspective.
@@ -519,7 +520,7 @@ namespace BookingApp.Server.Controllers
 
                 // --- Perform Deletion ---
                 // Delegate deletion to the repository.
-                bool deleted = await _repository.DeleteAccommodationAsync(id, cancellationToken);
+                await _repository.DeleteAccommodationAsync(id);
 
                 // Check if deletion was successful (repository might return false if it fails for some reason,
                 // though throwing is more common). Assuming here it throws on failure post-authorization.
@@ -611,7 +612,7 @@ namespace BookingApp.Server.Controllers
             {
                 // --- Fetch and Authorize ---
                 // Verify the accommodation exists and check ownership.
-                var accommodation = await _repository.GetAccommodationEntityAsync(id, cancellationToken);
+                var accommodation = await _repository.GetAccommodationEntityAsync(id);
                 if (accommodation == null)
                 {
                     _logger.LogWarning("Add availability failed: Accommodation with ID {AccommodationId} not found.", id);
@@ -630,7 +631,7 @@ namespace BookingApp.Server.Controllers
 
                 // --- Add Period ---
                 // Delegate the actual addition logic (including overlap checks if implemented) to the repository.
-                var createdPeriodDto = await _repository.AddAvailabilityPeriodAsync(id, periodDto, cancellationToken);
+                var createdPeriodDto = await _repository.AddAvailabilityPeriodAsync(id, periodDto);
 
                 _logger.LogInformation("Availability period added successfully for accommodation {AccommodationId} by User {UserId}. New Period ID (if applicable): {PeriodId}",
                                        id, GetCurrentUserIdOrDefault(), createdPeriodDto.Id); // Assuming AvailabilityPeriodDto has an Id

@@ -30,8 +30,8 @@ namespace BookingApp.Server.Dtos
         /// Number of guests
         /// </summary>
         [Required]
-        [Range(1, 20, ErrorMessage = "Guest count must be between 1 and 20")]
-        public int GuestCount { get; set; }
+        [Range(1, 20, ErrorMessage = "Number of guests must be between 1 and 20")]
+        public int NumberOfGuests { get; set; }
         
         /// <summary>
         /// Special requests from the guest

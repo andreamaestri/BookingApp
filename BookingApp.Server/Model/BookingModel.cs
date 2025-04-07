@@ -61,6 +61,17 @@ namespace BookingApp.Server.Model
         /// </summary>
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Date when the booking was cancelled, if applicable.
+        /// </summary>
+        public DateTime? CancellationDate { get; set; }
+
+        /// <summary>
+        /// Reason provided for cancellation, if applicable.
+        /// </summary>
+        [StringLength(500)]
+        public string? CancellationReason { get; set; }
+
         // --- Navigation Properties ---
         [ForeignKey("AccommodationId")]
         public virtual AccommodationModel? Accommodation { get; set; } // Nullable until loaded

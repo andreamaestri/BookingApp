@@ -1,3 +1,4 @@
+using BookingApp.Server.Core;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace BookingApp.Server.Repositories
         /// <summary>
         /// Gets a paginated list of bookings based on filter criteria
         /// </summary>
-        Task<PagedResult<BookingSummaryDto>> GetBookingsAsync(BookingFilter filter);
+        Task<Core.PagedResult<BookingSummaryDto>> GetBookingsAsync(BookingFilter filter);
         
         /// <summary>
         /// Gets detailed information for a specific booking by ID
