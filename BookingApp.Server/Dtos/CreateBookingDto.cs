@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-
 namespace BookingApp.Server.Dtos
 {
     /// <summary>
@@ -13,26 +10,26 @@ namespace BookingApp.Server.Dtos
         /// </summary>
         [Required]
         public int AccommodationId { get; set; }
-        
+
         /// <summary>
         /// Check-in date
         /// </summary>
         [Required]
         public DateTime CheckInDate { get; set; }
-        
+
         /// <summary>
         /// Check-out date
         /// </summary>
         [Required]
         public DateTime CheckOutDate { get; set; }
-        
+
         /// <summary>
         /// Number of guests
         /// </summary>
         [Required]
         [Range(1, 20, ErrorMessage = "Number of guests must be between 1 and 20")]
         public int NumberOfGuests { get; set; }
-        
+
         /// <summary>
         /// Special requests from the guest
         /// </summary>

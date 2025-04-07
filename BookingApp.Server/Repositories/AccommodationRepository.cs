@@ -1,13 +1,10 @@
 using AutoMapper;
+using BookingApp.Server.Data;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.Server.Repositories
 {
@@ -119,7 +116,7 @@ namespace BookingApp.Server.Repositories
                         Rating = r.Rating,
                         Comment = r.Comment,
                         ReviewDate = r.ReviewDate,
-                        GuestName = (r.Guest != null ? r.Guest.FirstName + " " + r.Guest.LastName : "Anonymous")
+                        GuestName = (r.Guest != null ? r.Guest.Name : "Anonymous") // Use Name property
                     }).ToList(),
                     AvailabilityPeriods = a.AvailabilityPeriods.Select(p => new AvailabilityPeriodDto
                     {
@@ -149,7 +146,7 @@ namespace BookingApp.Server.Repositories
         {
             // Map DTO to Model
             var accommodation = _mapper.Map<AccommodationModel>(createDto);
-            
+
             // Set additional fields
             accommodation.OwnerId = ownerId;
             accommodation.CreatedDate = DateTime.UtcNow;
@@ -176,7 +173,7 @@ namespace BookingApp.Server.Repositories
 
             // Update properties from DTO
             _mapper.Map(updateDto, accommodation);
-            
+
             // Update timestamp
             accommodation.LastModifiedDate = DateTime.UtcNow;
 
@@ -197,7 +194,7 @@ namespace BookingApp.Server.Repositories
 
             // Update only provided properties
             _mapper.Map(patchDto, accommodation);
-            
+
             // Update timestamp
             accommodation.LastModifiedDate = DateTime.UtcNow;
 
@@ -243,7 +240,7 @@ namespace BookingApp.Server.Repositories
                 // Safe fallback if PostgreSQL ILike isn't available
                 try
                 {
-                    query = query.Where(a => EF.Functions.ILike(a.Town, $"%{filter.Town}%"));
+                    query = query.Where(a => EF.Functions.Like(a.Town, $"%{filter.Town}%")); // Use SQL Server's Like
                 }
                 catch (InvalidOperationException)
                 {
@@ -293,14 +290,13 @@ namespace BookingApp.Server.Repositories
 
             bool descending = sortDirection?.ToLowerInvariant() == "desc";
 
-            query = descending
+            // Create an IOrderedQueryable<T> which supports ThenBy
+            var orderedQuery = descending
                 ? query.OrderByDescending(keySelector)
                 : query.OrderBy(keySelector);
 
             // Add secondary sort for stability
-            query = query.ThenBy(a => a.Id);
-
-            return query;
+            return orderedQuery.ThenBy(a => a.Id);
         }
 
         #endregion

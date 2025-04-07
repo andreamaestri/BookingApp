@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace BookingApp.Server.Model
 {
     /// <summary>
@@ -15,7 +12,7 @@ namespace BookingApp.Server.Model
         House,
         Bungalow,
         Farmhouse,
-        Lodge,      
+        Lodge,
         Studio,
         Other       // Catch-all, details in Description.
     }
@@ -47,9 +44,9 @@ namespace BookingApp.Server.Model
         SwimmingPool,     // Specify Private or Shared if needed.
         HotTub,
         Garden,           // Specify Private or Shared if needed.
-        WoodBurner,   
-        EVCharging,      
-        AirConditioning,  
+        WoodBurner,
+        EVCharging,
+        AirConditioning,
         Heating,          // Assumed standard, but explicit mention can be useful.
         SurfboardStorage, // Relevant for coastal properties.
         BBQ,

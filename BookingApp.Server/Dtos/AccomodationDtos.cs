@@ -1,5 +1,4 @@
 ﻿using BookingApp.Server.Model;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookingApp.Server.Dtos
@@ -16,7 +15,7 @@ namespace BookingApp.Server.Dtos
         public decimal BasePricePerNight { get; set; }
         public decimal? AverageRating { get; set; }
         public bool HasSeaView { get; set; }
-        public string? PrimaryImageUrl { get; set; } 
+        public string? PrimaryImageUrl { get; set; }
         public bool IsPetFriendly { get; set; }
     }
 

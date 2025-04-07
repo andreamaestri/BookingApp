@@ -1,9 +1,6 @@
 using AutoMapper;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace BookingApp.Server.Mapping
 {
@@ -26,8 +23,8 @@ namespace BookingApp.Server.Mapping
 
             // Review mappings
             CreateMap<ReviewModel, ReviewDto>()
-                .ForMember(dest => dest.GuestName, opt => opt.MapFrom(src => 
-                    src.Guest != null ? $"{src.Guest.FirstName} {src.Guest.LastName}" : "Anonymous"));
+                .ForMember(dest => dest.GuestName, opt => opt.MapFrom(src =>
+                    src.Guest != null ? src.Guest.Name : "Anonymous")); // Use Name property
 
             // Availability Period mappings
             CreateMap<AvailabilityPeriod, AvailabilityPeriodDto>();
@@ -46,9 +43,9 @@ namespace BookingApp.Server.Mapping
                 .ForMember(dest => dest.Reviews, opt => opt.Ignore())
                 .ForMember(dest => dest.Bookings, opt => opt.Ignore())
                 .ForMember(dest => dest.AvailabilityPeriods, opt => opt.Ignore())
-                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src =>
                     new HashSet<AmenityType>(src.Amenities)))
-                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src =>
                     new List<string>(src.ImageUrls)));
 
             // UpdateAccommodationDto to AccommodationModel (similar to Create)
@@ -62,27 +59,27 @@ namespace BookingApp.Server.Mapping
                 .ForMember(dest => dest.Bookings, opt => opt.Ignore())
                 .ForMember(dest => dest.AvailabilityPeriods, opt => opt.Ignore())
                 .ForMember(dest => dest.LastModifiedDate, opt => opt.MapFrom(_ => DateTime.UtcNow))
-                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src =>
                     new HashSet<AmenityType>(src.Amenities)))
-                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src =>
                     new List<string>(src.ImageUrls)));
 
             // AccommodationModel to UpdateAccommodationDto (for PATCH operations)
             CreateMap<AccommodationModel, UpdateAccommodationDto>()
-                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.Amenities, opt => opt.MapFrom(src =>
                     new List<AmenityType>(src.Amenities)))
-                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src =>
                     new List<string>(src.ImageUrls)));
 
             // BookingModel mappings (needed for relationships)
             CreateMap<BookingModel, BookingModel>();
-            
+
             // Booking Summary DTO mapping
             CreateMap<BookingModel, BookingSummaryDto>()
-                .ForMember(dest => dest.AccommodationName, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.AccommodationName, opt => opt.MapFrom(src =>
                     src.Accommodation != null ? src.Accommodation.Name : string.Empty))
-                .ForMember(dest => dest.GuestName, opt => opt.MapFrom(src => 
-                    src.Guest != null ? $"{src.Guest.FirstName} {src.Guest.LastName}" : string.Empty));
+                .ForMember(dest => dest.GuestName, opt => opt.MapFrom(src =>
+                    src.Guest != null ? src.Guest.Name : string.Empty)); // Use Name property
 
             // Booking Detail DTO mapping
             CreateMap<BookingModel, BookingDetailDto>()
@@ -104,8 +101,8 @@ namespace BookingApp.Server.Mapping
 
             // Guest Summary DTO mapping (needed for booking relationship)
             CreateMap<GuestModel, GuestSummaryDto>()
-                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => 
-                    $"{src.FirstName} {src.LastName}"));
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src =>
+                    src.Name)); // Use Name property
         }
     }
 }

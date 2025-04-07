@@ -1,21 +1,11 @@
 ﻿using AutoMapper;
 using BookingApp.Server.Core;
 using BookingApp.Server.Dtos;
-using BookingApp.Server.Model;
 using BookingApp.Server.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Text.Json;
 
 namespace BookingApp.Server.Controllers
 {
@@ -599,7 +589,7 @@ namespace BookingApp.Server.Controllers
                 _logger.LogWarning("Invalid availability period DTO for accommodation {AccommodationId}: End date before start date. DTO: {@AvailabilityPeriodDto}", id, periodDto);
                 return BadRequest(ModelState);
             }
-            
+
             // Fix: Use PricePerNightOverride instead of non-existent PricePerNight
             if (periodDto.PricePerNightOverride.HasValue && periodDto.PricePerNightOverride.Value <= 0)
             {

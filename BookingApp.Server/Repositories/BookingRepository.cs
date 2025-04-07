@@ -1,12 +1,7 @@
-using BookingApp.Server.Core;
+using AutoMapper;
+using BookingApp.Server.Data;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BookingApp.Server.Repositories
 {
@@ -52,7 +47,7 @@ namespace BookingApp.Server.Repositories
             var totalItems = await query.CountAsync();
             var pageSize = filter.PageSize ?? 10;
             var pageNumber = filter.PageNumber ?? 1;
-            
+
             var bookings = await query
                 .OrderByDescending(b => b.BookingDate)
                 .Skip((pageNumber - 1) * pageSize)
@@ -114,8 +109,8 @@ namespace BookingApp.Server.Repositories
 
             // Check if accommodation is available for the requested dates
             bool isAvailable = await IsAccommodationAvailableAsync(
-                createDto.AccommodationId, 
-                createDto.CheckInDate, 
+                createDto.AccommodationId,
+                createDto.CheckInDate,
                 createDto.CheckOutDate);
 
             if (!isAvailable)
@@ -180,16 +175,16 @@ namespace BookingApp.Server.Repositories
             // Update booking properties
             if (updateDto.CheckInDate.HasValue)
                 booking.CheckInDate = updateDto.CheckInDate.Value;
-            
+
             if (updateDto.CheckOutDate.HasValue)
                 booking.CheckOutDate = updateDto.CheckOutDate.Value;
-            
+
             if (updateDto.NumberOfGuests.HasValue)
                 booking.NumberOfGuests = updateDto.NumberOfGuests.Value;
-            
+
             if (updateDto.Status.HasValue)
                 booking.Status = updateDto.Status.Value;
-            
+
             if (updateDto.SpecialRequests != null)
                 booking.SpecialRequests = updateDto.SpecialRequests;
 
@@ -245,8 +240,8 @@ namespace BookingApp.Server.Repositories
 
             // Check if accommodation has available periods that cover the requested dates
             var hasAvailablePeriod = await _context.AvailabilityPeriods
-                .AnyAsync(p => p.AccommodationId == accommodationId 
-                            && p.StartDate <= checkIn 
+                .AnyAsync(p => p.AccommodationId == accommodationId
+                            && p.StartDate <= checkIn
                             && p.EndDate >= checkOut);
 
             if (!hasAvailablePeriod)

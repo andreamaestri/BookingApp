@@ -1,9 +1,7 @@
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Repositories;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BookingApp.Server.Controllers
 {

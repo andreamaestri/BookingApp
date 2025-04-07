@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace BookingApp.Server.Core
 {
     /// <summary>

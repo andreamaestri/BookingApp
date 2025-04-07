@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BookingApp.Server.Dtos
 {
     /// <summary>

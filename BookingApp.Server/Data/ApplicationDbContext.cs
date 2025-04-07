@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using BookingApp.Server.Model;
 
 namespace BookingApp.Server.Data
@@ -13,6 +12,7 @@ namespace BookingApp.Server.Data
         public DbSet<AccommodationModel> Accommodations { get; set; } = null!;
         public DbSet<BookingModel> Bookings { get; set; } = null!;
         public DbSet<GuestModel> Guests { get; set; } = null!;
+        public DbSet<AvailabilityPeriod> AvailabilityPeriods { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
