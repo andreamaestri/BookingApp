@@ -1,6 +1,7 @@
 using AutoMapper;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -75,6 +76,36 @@ namespace BookingApp.Server.Mapping
 
             // BookingModel mappings (needed for relationships)
             CreateMap<BookingModel, BookingModel>();
+            
+            // Booking Summary DTO mapping
+            CreateMap<BookingModel, BookingSummaryDto>()
+                .ForMember(dest => dest.AccommodationName, opt => opt.MapFrom(src => 
+                    src.Accommodation != null ? src.Accommodation.Name : string.Empty))
+                .ForMember(dest => dest.GuestName, opt => opt.MapFrom(src => 
+                    src.Guest != null ? $"{src.Guest.FirstName} {src.Guest.LastName}" : string.Empty));
+
+            // Booking Detail DTO mapping
+            CreateMap<BookingModel, BookingDetailDto>()
+                .ForMember(dest => dest.NightsCount, opt => opt.Ignore()) // Calculated property
+                .ForMember(dest => dest.Accommodation, opt => opt.MapFrom(src => src.Accommodation))
+                .ForMember(dest => dest.Guest, opt => opt.MapFrom(src => src.Guest));
+
+            // Create Booking DTO to BookingModel
+            CreateMap<CreateBookingDto, BookingModel>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.GuestId, opt => opt.Ignore())
+                .ForMember(dest => dest.Guest, opt => opt.Ignore())
+                .ForMember(dest => dest.Accommodation, opt => opt.Ignore())
+                .ForMember(dest => dest.BookingDate, opt => opt.MapFrom(_ => DateTime.UtcNow))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => BookingStatus.Confirmed))
+                .ForMember(dest => dest.TotalPrice, opt => opt.Ignore()) // Calculated in repository
+                .ForMember(dest => dest.CancellationDate, opt => opt.Ignore())
+                .ForMember(dest => dest.CancellationReason, opt => opt.Ignore());
+
+            // Guest Summary DTO mapping (needed for booking relationship)
+            CreateMap<GuestModel, GuestSummaryDto>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => 
+                    $"{src.FirstName} {src.LastName}"));
         }
     }
 }

@@ -21,8 +21,8 @@ builder.Services.AddAutoMapper(typeof(BookingApp.Server.Mapping.MappingProfile))
 
 // Register repositories
 builder.Services.AddScoped<IAccommodationRepository, AccommodationRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 // Add other repositories as needed
-// builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 // builder.Services.AddScoped<IGuestRepository, GuestRepository>();
 
 // Configure System.Text.Json
