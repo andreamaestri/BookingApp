@@ -1,51 +1,54 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import BookingList from './components/BookingList';
 import './App.css';
 
 function App() {
-    const [forecasts, setForecasts] = useState();
+    const [activeView, setActiveView] = useState('bookings');
 
-    useEffect(() => {
-        populateWeatherData();
-    }, []);
-
-    const contents = forecasts === undefined
-        ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
-        : <table className="table table-striped" aria-labelledby="tableLabel">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                {forecasts.map(forecast =>
-                    <tr key={forecast.date}>
-                        <td>{forecast.date}</td>
-                        <td>{forecast.temperatureC}</td>
-                        <td>{forecast.temperatureF}</td>
-                        <td>{forecast.summary}</td>
-                    </tr>
-                )}
-            </tbody>
-        </table>;
+    const renderView = () => {
+        switch (activeView) {
+            case 'bookings':
+                return <BookingList />;
+            default:
+                return <div>Select a view from the navigation</div>;
+        }
+    };
 
     return (
-        <div>
-            <h1 id="tableLabel">Weather forecast</h1>
-            <p>This component demonstrates fetching data from the server.</p>
-            {contents}
+        <div className="app-container">
+            <header className="app-header">
+                <h1>BookingApp</h1>
+                <nav className="main-nav">
+                    <button 
+                        className={activeView === 'bookings' ? 'active' : ''} 
+                        onClick={() => setActiveView('bookings')}
+                    >
+                        Bookings
+                    </button>
+                    <button 
+                        className={activeView === 'accommodations' ? 'active' : ''} 
+                        onClick={() => setActiveView('accommodations')}
+                    >
+                        Accommodations
+                    </button>
+                    <button 
+                        className={activeView === 'profile' ? 'active' : ''} 
+                        onClick={() => setActiveView('profile')}
+                    >
+                        Profile
+                    </button>
+                </nav>
+            </header>
+            
+            <main className="app-content">
+                {renderView()}
+            </main>
+            
+            <footer className="app-footer">
+                <p>&copy; {new Date().getFullYear()} BookingApp - All rights reserved</p>
+            </footer>
         </div>
     );
-    
-    async function populateWeatherData() {
-        const response = await fetch('weatherforecast');
-        if (response.ok) {
-            const data = await response.json();
-            setForecasts(data);
-        }
-    }
 }
 
 export default App;
