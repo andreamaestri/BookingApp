@@ -13,6 +13,7 @@ namespace BookingApp.Server.Data
         public DbSet<BookingModel> Bookings { get; set; } = null!;
         public DbSet<GuestModel> Guests { get; set; } = null!;
         public DbSet<AvailabilityPeriod> AvailabilityPeriods { get; set; } = null!;
+        public DbSet<ReviewModel> Reviews { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,6 +28,24 @@ namespace BookingApp.Server.Data
                 .HasOne(b => b.Guest)
                 .WithMany(g => g.Bookings)
                 .HasForeignKey(b => b.GuestId);
+
+            // Fix for multiple cascade paths in ReviewModel
+            modelBuilder.Entity<ReviewModel>()
+                .HasOne(r => r.Booking)
+                .WithMany()
+                .HasForeignKey(r => r.BookingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ReviewModel>()
+                .HasOne(r => r.Guest)
+                .WithMany()
+                .HasForeignKey(r => r.GuestId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            // Configure decimal precision for AverageRating to address the warning
+            modelBuilder.Entity<AccommodationModel>()
+                .Property(a => a.AverageRating)
+                .HasPrecision(3, 1);
         }
     }
 }

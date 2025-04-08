@@ -26,7 +26,13 @@ const BookingList = () => {
       params.append('pageSize', filter.pageSize);
       
       const response = await axios.get(`/api/v1/bookings?${params.toString()}`);
-      setBookings(response.data.items);
+      // Check if response.data has the expected structure
+      if (response.data && response.data.items) {
+        setBookings(response.data.items);
+      } else {
+        // If items is not present, use the whole response.data if it's an array, otherwise use empty array
+        setBookings(Array.isArray(response.data) ? response.data : []);
+      }
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch bookings. Please try again later.');
