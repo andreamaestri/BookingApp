@@ -2,9 +2,13 @@ using AutoMapper;
 using BookingApp.Server.Data;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BookingApp.Server.Repositories
 {
@@ -16,7 +20,7 @@ namespace BookingApp.Server.Repositories
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<AccommodationRepository> _logger;
-
+        
         public AccommodationRepository(
             ApplicationDbContext context,
             IMapper mapper,
@@ -26,57 +30,69 @@ namespace BookingApp.Server.Repositories
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-
+        
         public async Task<PagedResult<AccommodationSummaryDto>> GetAccommodationsAsync(AccommodationFilter filter)
         {
-            var query = _context.Accommodations.AsQueryable();
-
-            // Apply filtering
-            query = ApplyFilters(query, filter);
-
-            // Apply sorting
-            query = ApplySorting(query, filter.SortBy, filter.SortDirection);
-
-            // Get total count (before pagination)
-            var totalCount = await query.CountAsync();
-            if (totalCount == 0)
+            try
             {
-                return new PagedResult<AccommodationSummaryDto>
-                {
-                    Items = new List<AccommodationSummaryDto>(),
-                    TotalCount = 0,
-                    PageNumber = filter.PageNumber,
-                    PageSize = filter.PageSize
-                };
-            }
+                var query = _context.Accommodations.AsQueryable();
 
-            // Project to DTO with pagination
-            var items = await query
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
-                .Select(a => new AccommodationSummaryDto
+                // Apply filtering
+                query = ApplyFilters(query, filter);
+
+                // Apply sorting
+                query = ApplySorting(query, filter.SortBy, filter.SortDirection);
+
+                // Get total count (before pagination)
+                var totalCount = await query.CountAsync();
+                if (totalCount == 0)
+                {
+                    return new PagedResult<AccommodationSummaryDto>
+                    {
+                        Items = new List<AccommodationSummaryDto>(),
+                        TotalCount = 0,
+                        PageNumber = filter.PageNumber,
+                        PageSize = filter.PageSize
+                    };
+                }
+
+                // Instead of direct projection which can cause issues with complex properties,
+                // fetch basic entities then map them to DTOs using AutoMapper or manual mapping
+                var accommodations = await query
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize)
+                    .ToListAsync();
+
+                // Now manually map to DTOs to avoid EF Core projection issues
+                var items = accommodations.Select(a => new AccommodationSummaryDto
                 {
                     Id = a.Id,
-                    Title = a.Title,
+                    Title = a.Title ?? string.Empty,
                     Type = a.Type,
-                    Town = a.Town,
+                    Town = a.Town ?? string.Empty,
                     Bedrooms = a.Bedrooms,
                     MaxOccupancy = a.MaxOccupancy,
                     BasePricePerNight = a.BasePricePerNight,
                     AverageRating = a.AverageRating,
                     HasSeaView = a.HasSeaView,
-                    PrimaryImageUrl = a.ImageUrls.FirstOrDefault(),
-                    IsPetFriendly = a.Amenities.Contains(AmenityType.PetFriendly)
-                })
-                .ToListAsync();
+                    // Safe handling of collections
+                    PrimaryImageUrl = a.ImageUrls != null && a.ImageUrls.Any() ? a.ImageUrls.First() : null,
+                    IsPetFriendly = a.Amenities != null && a.Amenities.Contains(AmenityType.PetFriendly)
+                }).ToList();
 
-            return new PagedResult<AccommodationSummaryDto>
+                return new PagedResult<AccommodationSummaryDto>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = filter.PageNumber,
+                    PageSize = filter.PageSize
+                };
+            }
+            catch (Exception ex)
             {
-                Items = items,
-                TotalCount = totalCount,
-                PageNumber = filter.PageNumber,
-                PageSize = filter.PageSize
-            };
+                _logger.LogError(ex, "Error in GetAccommodationsAsync method");
+                throw; // Rethrow to preserve the stack trace
+            }
         }
 
         public async Task<AccommodationDetailDto> GetAccommodationByIdAsync(int id)
@@ -95,8 +111,8 @@ namespace BookingApp.Server.Repositories
                     BasePricePerNight = a.BasePricePerNight,
                     AverageRating = a.AverageRating,
                     HasSeaView = a.HasSeaView,
-                    PrimaryImageUrl = a.ImageUrls.FirstOrDefault(),
-                    IsPetFriendly = a.Amenities.Contains(AmenityType.PetFriendly),
+                    PrimaryImageUrl = a.ImageUrls != null && a.ImageUrls.Any() ? a.ImageUrls.FirstOrDefault() : null,
+                    IsPetFriendly = a.Amenities != null && a.Amenities.Contains(AmenityType.PetFriendly),
                     Description = a.Description,
                     AddressLine1 = a.AddressLine1,
                     AddressLine2 = a.AddressLine2,
@@ -108,17 +124,17 @@ namespace BookingApp.Server.Repositories
                     CleaningFee = a.CleaningFee,
                     SecurityDeposit = a.SecurityDeposit,
                     OwnerId = a.OwnerId,
-                    Amenities = a.Amenities,
-                    ImageUrls = a.ImageUrls,
-                    Reviews = a.Reviews.Select(r => new ReviewDto
+                    Amenities = a.Amenities ?? new List<AmenityType>(),
+                    ImageUrls = a.ImageUrls ?? new List<string>(),
+                    Reviews = a.Reviews != null ? a.Reviews.Select(r => new ReviewDto
                     {
                         Id = r.Id,
                         Rating = r.Rating,
                         Comment = r.Comment,
                         ReviewDate = r.ReviewDate,
                         GuestName = (r.Guest != null ? r.Guest.Name : "Anonymous") // Use Name property
-                    }).ToList(),
-                    AvailabilityPeriods = a.AvailabilityPeriods.Select(p => new AvailabilityPeriodDto
+                    }).ToList() : new List<ReviewDto>(),
+                    AvailabilityPeriods = a.AvailabilityPeriods != null ? a.AvailabilityPeriods.Select(p => new AvailabilityPeriodDto
                     {
                         Id = p.Id,
                         StartDate = p.StartDate,
@@ -127,7 +143,7 @@ namespace BookingApp.Server.Repositories
                         IsAvailable = p.IsAvailable,
                         MinimumStayNights = p.MinimumStayNights,
                         Notes = p.Notes
-                    }).ToList(),
+                    }).ToList() : new List<AvailabilityPeriodDto>(),
                     CreatedDate = a.CreatedDate,
                     LastModifiedDate = a.LastModifiedDate
                 })

@@ -2,6 +2,7 @@ using AutoMapper;
 using BookingApp.Server.Data;
 using BookingApp.Server.Dtos;
 using BookingApp.Server.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.Server.Repositories
 {
@@ -17,9 +18,7 @@ namespace BookingApp.Server.Repositories
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        }
-
-        /// <inheritdoc />
+        }        /// <inheritdoc />
         public async Task<Core.PagedResult<BookingSummaryDto>> GetBookingsAsync(BookingFilter filter)
         {
             var query = _context.Bookings
@@ -41,6 +40,16 @@ namespace BookingApp.Server.Repositories
             if (filter.ToDate.HasValue)
             {
                 query = query.Where(b => b.CheckOutDate <= filter.ToDate.Value);
+            }
+
+            if (filter.GuestId.HasValue)
+            {
+                query = query.Where(b => b.GuestId == filter.GuestId.Value);
+            }
+
+            if (filter.AccommodationId.HasValue)
+            {
+                query = query.Where(b => b.AccommodationId == filter.AccommodationId.Value);
             }
 
             // Calculate total items and apply pagination

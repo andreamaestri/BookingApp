@@ -15,17 +15,26 @@ namespace BookingApp.Server.Controllers
         public BookingsController(IBookingRepository bookingRepository)
         {
             _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Gets a paginated list of bookings
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(typeof(PagedResult<BookingSummaryDto>), 200)]
+        [ProducesResponseType(typeof(Core.PagedResult<BookingSummaryDto>), 200)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetBookings([FromQuery] BookingFilter filter)
         {
-            var bookings = await _bookingRepository.GetBookingsAsync(filter);
-            return Ok(bookings);
+            try
+            {
+                var bookings = await _bookingRepository.GetBookingsAsync(filter);
+                return Ok(bookings);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error getting bookings: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, "An error occurred while retrieving bookings. Please try again later.");
+            }
         }
 
         /// <summary>

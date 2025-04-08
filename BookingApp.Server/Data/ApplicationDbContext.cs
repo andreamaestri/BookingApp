@@ -1,4 +1,5 @@
 using BookingApp.Server.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookingApp.Server.Data
 {
